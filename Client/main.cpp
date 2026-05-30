@@ -20,7 +20,6 @@ using namespace std;
 void main()
 {
 	setlocale(LC_ALL, "");
-
 	// 1) Инициализация WinSOCK
 	WSAData wsaData;
 	int iResult = 0;
@@ -38,7 +37,7 @@ void main()
 	ZeroMemory(&hints, sizeof(hints)); // Обнуляем экземпляр структуры
 	hints.ai_family = AF_INET; // Стек протоколов TCP/IPv4
 	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_protocol = IPPROTO_TCP; //Определяем протокол транспортного уровня
+	hints.ai_protocol = IPPROTO_TCP; // Определяем протокол транспортного уровня
 	iResult = getaddrinfo("127.0.0.1", "27015", &hints, &target);
 	if (iResult != 0)
 	{
@@ -60,8 +59,13 @@ void main()
 	
 	// 4) Подключаем к узлу:
 	iResult = connect(connect_socket, target->ai_addr, target->ai_addrlen);
+	DWORD dwError = WSAGetLastError();
+
+	freeaddrinfo(target);
 	if (iResult == SOCKET_ERROR)
 	{
+		cout << "Error " << dwError << ":\t";
+		// WSAGetLastError() в обязательном порядке должна быть вызвана непосредственно после вызова функции, которая потенциально может выполнится с ошибкой
 		cout << "Unable to connect to server" << endl;
 		closesocket(connect_socket);
 		//freeaddrinfo(target);

@@ -4,4 +4,5 @@
     <Platform Name="x86" />
   </Configurations>
   <Project Path="Client/Client.vcxproj" Id="da1567b2-7d9c-4dcb-b85b-10bcf6f661d5" />
+  <Project Path="Server/Server.vcxproj" Id="6bfea778-d9ac-4d7c-b2fc-1a36adfcdeb8" />
 </Solution>
