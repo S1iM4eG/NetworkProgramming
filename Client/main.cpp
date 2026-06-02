@@ -11,10 +11,13 @@
 #include<WinSock2.h>
 #include<WS2tcpip.h>
 #include<iphlpapi.h>
+//#include<FormatLastError.h>
 
 using namespace std;
 
 #pragma comment(lib, "WS2_32.lib") // Встраиваем статическую библиотеку, для заголовка <WS2tcpip.h>
+#pragma comment(lib, "FormatLastError.lib")
+
 #define MTU 1500 // Maximum Transfer Unit - Максимально возмодный размер Ethernet-кадра
 
 CHAR* FormatLastError(DWORD dwError, CHAR szError[]);
@@ -115,21 +118,3 @@ void main()
 	WSACleanup();
 }
 
-CHAR* FormatLastError(DWORD dwError, CHAR szError[])
-{
-	LPSTR lpError = NULL;
-	FormatMessage
-	(
-		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-		NULL,
-		dwError,
-		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		(LPSTR)&lpError,
-		0,
-		NULL
-	);
-	//strcpy(szError, lpError);
-	sprintf(szError, "Error %i:%s", dwError, lpError);
-	LocalFree(lpError);
-	return szError;
-}
