@@ -19,7 +19,7 @@ using namespace std;
 
 void main()
 {
-	setlocale(LC_ALL, "");
+	setlocale(LC_ALL, "RUSSIAN");
 	cout << "SERVER";
 
 	//1) Инициализация WinSOCK:
@@ -96,12 +96,12 @@ void main()
 	cout << inet_ntoa(client_adress.sin_addr) << ":" << ntohs(client_adress.sin_port) << endl;
 
 	//7) Получаем данные от клиента:
-	CHAR recv_buffer[MTU] = {};
 	CHAR send_buffer[MTU] = "Hello client";
 	INT iReceivedBytes = 0;
 	INT iSentBytes = 0;
 	do
 	{
+		CHAR recv_buffer[MTU] = {};
 		iReceivedBytes = recv(client_socket, recv_buffer, MTU, 0);
 		// Функция recv() - Receive ожидает получение данных по указанному сокету, и возвращает количество полученных Байт
 		if (iReceivedBytes > 0)

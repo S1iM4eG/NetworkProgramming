@@ -1,4 +1,4 @@
-#ifndef WIN32_LEAN_AND_MEAN
+﻿#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 // Если с библиотекой <WinSOCK2.h> подключается файл <Windows.h> или <IPhlpAPI>
 // то они тоже подключают файл <WinSOCK2.h>, что приводит к конфликтам
@@ -24,7 +24,7 @@ CHAR* FormatLastError(DWORD dwError, CHAR szError[]);
 
 void main()
 {
-	setlocale(LC_ALL, "");
+	setlocale(LC_ALL, "RUSSIAN");
 	cout << "CLIENT" << endl;
 	DWORD dwError = 0;
 	CHAR szError[256] = {};
@@ -88,27 +88,37 @@ void main()
 	// 5) Отправка и получение данных:
 	CHAR send_buffer[MTU] = "Hello Server";
 //	CHAR recv_buffer[MTU] = {};
-	iResult = send(connect_socket, send_buffer, strlen(send_buffer), 0);
-	dwError = WSAGetLastError();
-	if (iResult == SOCKET_ERROR)
-	{
-		cout << "Send failed with error: " << WSAGetLastError() << endl;
-		cout << FormatLastError(dwError, szError) << endl;
-		closesocket(connect_socket);
-		WSACleanup;
-		return;
-	}
-
-	// 6) Получение данных:
-	CHAR recv_buffer[MTU] = {};
+	
 	do
 	{
-		iResult = recv(connect_socket, recv_buffer, MTU, 0);
+		iResult = send(connect_socket, send_buffer, strlen(send_buffer), 0);
 		dwError = WSAGetLastError();
-		if (iResult > 0) cout << "Bytes received: " << iResult << "Message: " << recv_buffer << endl;
-		else if (iResult == 0) cout << "Connection closed" << endl;
-		else cout << "Receive failed with error " << FormatLastError(dwError, szError) << endl;
-	} while (iResult > 0);
+		if (iResult == SOCKET_ERROR)
+		{
+			cout << "Send failed with error: " << WSAGetLastError() << endl;
+			cout << FormatLastError(dwError, szError) << endl;
+			closesocket(connect_socket);
+			WSACleanup;
+			return;
+		}
+
+		// 6) Получение данных:
+		CHAR recv_buffer[MTU] = {};
+		//do
+		{
+			iResult = recv(connect_socket, recv_buffer, MTU, 0);
+			dwError = WSAGetLastError();
+			if (iResult > 0) cout << "Bytes received: " << iResult << "Message: " << recv_buffer << endl;
+			else if (iResult == 0) cout << "Connection closed" << endl;
+			else cout << "Receive failed with error " << FormatLastError(dwError, szError) << endl;
+		} //while (iResult > 0);
+		ZeroMemory(send_buffer, MTU);
+		ZeroMemory(recv_buffer, MTU);
+		cout << "Введите сообщение: ";
+		SetConsoleCP(1251);
+		cin.getline(send_buffer, MTU);
+		SetConsoleCP(866);
+	} while (strcmp(send_buffer, "exit") != 0);
 
 	iResult = shutdown(connect_socket, SD_BOTH); // Закрываем сокет на получение и отправку данных
 	if (iResult == SOCKET_ERROR) cout << "Shutdown failed with error " << FormatLastError(WSAGetLastError(),szError) << endl;
