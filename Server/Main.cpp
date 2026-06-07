@@ -1,7 +1,9 @@
 //Server
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
+
 #include<iostream>
 #include<Windows.h>
 #include<WinSock2.h>
@@ -80,7 +82,9 @@ void main()
 	}
 
 	//6) Принимаем подключение от клиента
-	SOCKET client_socket = accept(listen_socket, NULL, NULL);
+	SOCKADDR_IN client_adress;
+	INT client_adress_len = sizeof(client_adress);
+	SOCKET client_socket = accept(listen_socket, (SOCKADDR*)&client_adress, &client_adress_len);
 	if (client_socket == INVALID_SOCKET)
 	{
 		cout << "Accept failed with error: " << WSAGetLastError() << endl;
@@ -89,6 +93,7 @@ void main()
 		WSACleanup();
 		return;
 	}
+	cout << inet_ntoa(client_adress.sin_addr) << ":" << ntohs(client_adress.sin_port) << endl;
 
 	//7) Получаем данные от клиента:
 	CHAR recv_buffer[MTU] = {};
