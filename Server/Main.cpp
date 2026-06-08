@@ -15,12 +15,20 @@ using namespace std;
 #pragma comment(lib, "WS2_32.lib")
 #pragma comment(lib, "FormatLastError.lib")
 
-#define MTU 1500 // Maximum Transfer Unit - Максимально возмодный размер Ethernet-кадра
+#define MTU				1500 // Maximum Transfer Unit - Максимально возмодный размер Ethernet-кадра
+#define MAX_CONNECTIONS 3
+VOID ClientHandle(SOCKET client_socket);
+
+SOCKET client_sockets[MAX_CONNECTIONS] = {};	
+DWORD dwThreadIDs[MAX_CONNECTIONS] = {};		// Идентификаторы потоков
+HANDLE hThreads[MAX_CONNECTIONS] = {};			// Дескрипторы потоков
+
+INT g_ActiveClients = 0;
 
 void main()
 {
 	setlocale(LC_ALL, "RUSSIAN");
-	cout << "SERVER";
+	cout << "SERVER" << endl;
 
 	//1) Инициализация WinSOCK:
 	WSADATA wsaData;
@@ -80,29 +88,57 @@ void main()
 		WSACleanup();
 		return;
 	}
-
-	//6) Принимаем подключение от клиента
-	SOCKADDR_IN client_adress;
-	INT client_adress_len = sizeof(client_adress);
-	SOCKET client_socket = accept(listen_socket, (SOCKADDR*)&client_adress, &client_adress_len);
-	if (client_socket == INVALID_SOCKET)
+	do
 	{
-		cout << "Accept failed with error: " << WSAGetLastError() << endl;
-		closesocket(listen_socket);
-		freeaddrinfo(target);
-		WSACleanup();
-		return;
-	}
-	cout << inet_ntoa(client_adress.sin_addr) << ":" << ntohs(client_adress.sin_port) << endl;
+		//6) Принимаем подключение от клиента
+		SOCKADDR_IN client_adress;
+		INT client_adress_len = sizeof(client_adress);
+		SOCKET client_socket = accept(listen_socket, (SOCKADDR*)&client_adress, &client_adress_len);
+		if (client_socket == INVALID_SOCKET)
+		{
+			cout << "Accept failed with error: " << WSAGetLastError() << endl;
+			closesocket(listen_socket);
+			freeaddrinfo(target);
+			WSACleanup();
+			return;
+		}
+		cout << inet_ntoa(client_adress.sin_addr) << ":" << ntohs(client_adress.sin_port) << endl;
 
-	//7) Получаем данные от клиента:
+		//7) Получаем данные от клиента:
+		//ClientHandle(client_socket);
+		client_sockets[g_ActiveClients] = client_socket;
+		hThreads[g_ActiveClients] = CreateThread
+		(
+			NULL,
+			0,
+			(LPTHREAD_START_ROUTINE)ClientHandle,
+			(LPVOID)client_sockets[g_ActiveClients],
+			NULL,
+			&dwThreadIDs[g_ActiveClients]
+		);
+		g_ActiveClients++;
+	} while (true);
+
+	//9) Освобождаем ресурсы, занятые WinSOCK:
+	closesocket(listen_socket);
+	freeaddrinfo(target);
+	WSACleanup();
+}
+
+VOID ClientHandle(SOCKET client_socket)
+{
+	INT iResult = 0;
+	DWORD dwError = 0;
+	CHAR szError[256] = {};
 	CHAR send_buffer[MTU] = "Hello client";
 	INT iReceivedBytes = 0;
 	INT iSentBytes = 0;
 	do
 	{
 		CHAR recv_buffer[MTU] = {};
+		cout << &recv_buffer << endl;
 		iReceivedBytes = recv(client_socket, recv_buffer, MTU, 0);
+		dwError = WSAGetLastError();
 		// Функция recv() - Receive ожидает получение данных по указанному сокету, и возвращает количество полученных Байт
 		if (iReceivedBytes > 0)
 		{
@@ -112,18 +148,13 @@ void main()
 			else cout << iSentBytes << "Bytes sent" << endl;
 		}
 		else if (iReceivedBytes == 0) cout << "Connection closing..." << endl;
-		else cout << "Received failed with error: " << WSAGetLastError() << endl;
+		else cout << "Received failed with error: " << FormatLastError(WSAGetLastError(), szError) << endl;
 	} while (iReceivedBytes > 0);
 
 	//8) Разрываем TCP-соединение:
 	iResult = shutdown(client_socket, SD_BOTH);
-	if (iResult == SOCKET_ERROR)
-	{
-		cout << "shutdown failed with error:\t" << WSAGetLastError << endl;
-	}
+	dwError = WSAGetLastError();
+	if (iResult == SOCKET_ERROR) cout << "shutdown failed with error:\t" << FormatLastError(WSAGetLastError(), szError) << endl;
 
-	//9) Освобождаем ресурсы, занятые WinSOCK:
-	closesocket(listen_socket);
-	freeaddrinfo(target);
-	WSACleanup();
+
 }
