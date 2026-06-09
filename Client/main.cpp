@@ -12,6 +12,7 @@
 #include<WS2tcpip.h>
 #include<iphlpapi.h>
 #include<FormatLastError.h>
+#include<Messages.h>
 
 using namespace std;
 
@@ -87,6 +88,7 @@ void main()
 
 	// 5) Отправка и получение данных:
 	CHAR send_buffer[MTU] = "Hello Server";
+	CHAR recv_buffer[MTU] = {};
 //	CHAR recv_buffer[MTU] = {};
 	
 	do
@@ -103,7 +105,7 @@ void main()
 		}
 
 		// 6) Получение данных:
-		CHAR recv_buffer[MTU] = {};
+		ZeroMemory(recv_buffer, MTU);
 		//do
 		{
 			iResult = recv(connect_socket, recv_buffer, MTU, 0);
@@ -113,8 +115,8 @@ void main()
 			else cout << "Receive failed with error " << FormatLastError(dwError, szError) << endl;
 		} //while (iResult > 0);
 		ZeroMemory(send_buffer, MTU);
-		ZeroMemory(recv_buffer, MTU);
-		cout << "Введите сообщение: ";
+		if (strcmp(recv_buffer, DECLINE_MESSAGE) != 0) cout << "Введите сообщение: ";
+		else cout << "Для выхода нажмите 'Enter'" << endl;
 		SetConsoleCP(1251);
 		cin.getline(send_buffer, MTU);
 		SetConsoleCP(866);
